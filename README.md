@@ -60,7 +60,7 @@ app.listen(8080);
 
 - `options.expired` The expired for frequency limit, it should be `HH:mm`. If it's set, the ttl will be ignored
 
-- `options.hash` The function to get the hash key, default is `_.identity`
+- `options.hash` The function to get the hash key, default is `_.identity`, if return `''`, the limit will be ignore
 
 - `options.prefix` The prefix for the cache key
 
@@ -76,7 +76,47 @@ const limiter = new Limiter(redis, {
 });
 ```
 
+### seter
+
+`ttl` `expired` `prefix` can be reset
+
+```js
+const Redis = require('ioredis');
+const Limiter = require('superlimiter');
+
+const redis = new Redis('redis://127.0.0.1:6379');
+const limiter = new Limiter(redis, {
+  ttl: 10,
+});
+limiter.ttl = 60;
+limiter.expired = '23:30';
+limiter.prefix = 'my-test-';
+```
+
+### getter
+
+`client` `options` `ttl` `expired` `prefix`
+
+```js
+const Redis = require('ioredis');
+const assert = require('assert');
+const Limiter = require('superlimiter');
+
+const redis = new Redis('redis://127.0.0.1:6379');
+const limiter = new Limiter(redis, {
+  ttl: 10,
+});
+assert.equal(limiter.client, redis);
+// {ttl : 10, .. ..}
+console.info(limiter.options);
+assert.equal(limiter.ttl, 10);
+assert.equal(limiter.expired, '');
+assert.equal(limiter.prefix, 'super-limiter-');
+```
+
 ### exec
+
+Inc the count of the key, if the count bigger than max, it will be throw an error, otherwise it will be resolve. If the hash function return `''`, it will be resolve without any change of count.
 
 - `...args` The arguments for the hash function
 
@@ -95,8 +135,9 @@ limiter.exec('mykey').then(() => {
 
 ### middleware
 
-- `hash` the hash function, if the hash function return `''`, it will ignore limit check.
+- `type` The middleware's type, it can be `koa` or `express`, default is `koa`.
 
+The middleware for koa and express. For koa, it will use `ctx` for the hash argument. For express, it will use `req`, `res` for the hash argument.
 
 ```js
 const Koa = require('koa');
@@ -125,4 +166,26 @@ app.use(limiter.middleware());
 
 app.listen(8080);
 
+```
+
+### keys
+
+Get the keys of this limiter
+
+- `withTTL` Get the ttl of key if set `true`, default is `false`
+
+```js
+const Redis = require('ioredis');
+const Limiter = require('superlimiter');
+
+const redis = new Redis('redis://127.0.0.1:6379');
+const limiter = new Limiter(redis, {
+  ttl: 10,
+});
+
+// ["...", "..."]
+limiter.keys().then(console.info).catch(console.error);
+
+// [{"key": "...", "ttl": ..}, ...]
+limiter.keys(true).then(console.info).catch(console.error);
 ```
