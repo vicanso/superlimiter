@@ -161,7 +161,9 @@ describe('Limiter', () => {
       return limiter.exec(key);
     }).then((count) => {
       assert.equal(count, 2);
-    }).catch(done);
+      return limiter.getCount(key);
+    }).then(count => assert.equal(count, 2))
+    .catch(done);
 
     setTimeout(() => {
       limiter.exec(key).then(() => {

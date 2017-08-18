@@ -133,6 +133,23 @@ limiter.exec('mykey').then(() => {
 }).catch(console.error);
 ```
 
+### getCount
+
+- `...args` The arguments for the hash function 
+
+```js
+const Redis = require('ioredis');
+const Limiter = require('superlimiter');
+
+const redis = new Redis('redis://127.0.0.1:6379');
+const limiter = new Limiter(redis, {
+  ttl: 10,
+});
+limiter.getCount('mykey').then((count) => {
+  console.info(count);
+}).catch(console.error);
+```
+
 ### middleware
 
 - `type` The middleware's type, it can be `koa` or `express`, default is `koa`.
